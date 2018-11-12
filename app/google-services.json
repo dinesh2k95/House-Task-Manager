@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "96869715540",
+    "firebase_url": "https://housetaskmanager-cb846.firebaseio.com",
+    "project_id": "housetaskmanager-cb846",
+    "storage_bucket": "housetaskmanager-cb846.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96869715540:android:debfb660dfaa2577",
+        "android_client_info": {
+          "package_name": "projects.dinesh.housetaskmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "96869715540-kubfei5v086ooorj2qlq7hku7k3aoskp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "projects.dinesh.housetaskmanager",
+            "certificate_hash": "adae5eccaa0e957e35e701431f021f939d3b589b"
+          }
+        },
+        {
+          "client_id": "96869715540-cf4q4likjn057a5rsdmaatmaaesh26vm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMUVegZBpMJrVNqFfud3MG1QW94n3MTMY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "96869715540-cf4q4likjn057a5rsdmaatmaaesh26vm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
