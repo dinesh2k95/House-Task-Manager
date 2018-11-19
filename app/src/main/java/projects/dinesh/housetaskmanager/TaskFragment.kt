@@ -4,6 +4,7 @@ import android.arch.lifecycle.ViewModelProviders
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,14 @@ class TaskFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        taskList.adapter = viewModel.init()
+        taskList.setHasFixedSize(false)
+        viewModel.init()
+        taskList.layoutManager = LinearLayoutManager(context)
+//        (taskList.adapter as TaskViewModel.TaskAdapter).startListening()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+//        (taskList.adapter as TaskViewModel.TaskAdapter).stopListening()
     }
 }
