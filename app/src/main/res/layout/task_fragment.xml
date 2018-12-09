@@ -4,20 +4,43 @@
     <data>
         <variable
             name="viewModel"
-            type="projects.dinesh.housetaskmanager.TaskViewModel" />
+            type="projects.dinesh.housetaskmanager.task.TaskViewModel" />
     </data>
 
     <LinearLayout
         android:id="@+id/task"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{viewModel.welcomeMessage}"
+            android:textSize="20sp"
+            android:layout_weight="0.2"
+            android:gravity="center"
+            />
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/taskList"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="gone"
             android:adapter="@{viewModel.taskAdapter}">
         </android.support.v7.widget.RecyclerView>
+
+        <TextView
+            android:id="@+id/infoView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:text="Loading your Tasks ..."
+            android:textSize="20sp"
+            android:layout_weight="0.2"
+            android:textColor="#000"
+            android:gravity="center"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </layout>
