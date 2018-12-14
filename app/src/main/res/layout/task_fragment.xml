@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:text="@{viewModel.welcomeMessage}"
             android:textSize="20sp"
-            android:layout_weight="0.2"
+            android:layout_weight="0.1"
             android:gravity="center"
             />
 

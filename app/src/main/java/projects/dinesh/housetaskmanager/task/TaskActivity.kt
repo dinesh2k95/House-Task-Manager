@@ -25,9 +25,17 @@ class TaskActivity : AppCompatActivity(), LoginFragment.OnLoginListener {
     }
 
     override fun onLoginSuccess() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container, TaskFragment.newInstance())
-            .commitNow()
+        val isAdmin = true
+        if (isAdmin) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, AdminFragment.newInstance())
+                .commitNow()
+        } else {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, TaskFragment.newInstance())
+                .commitNow()
+        }
+
     }
 
     fun openAdminFragment() {

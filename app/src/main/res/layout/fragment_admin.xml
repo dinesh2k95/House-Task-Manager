@@ -1,37 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".admin.AdminFragment">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+        <data>
+            <variable
+                name="adapter"
+                type="projects.dinesh.housetaskmanager.admin.AdminFragment.AdminTaskAdapter" />
+        </data>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".admin.AdminFragment">
 
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.4"
-            android:text="Select User"/>
+            android:orientation="horizontal"
+            android:padding="10dp">
 
-        <Spinner
-            android:id="@+id/userSpinner"
-            android:layout_width="0dp"
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.4"
+                android:text="Select User" />
+
+            <Spinner
+                android:id="@+id/userSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.6"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/selectDate"
+            android:text="Select Date"
+            android:padding="10dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.6">
-        </Spinner>
+            android:visibility="gone" />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/adminTaskList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="gone"
+            android:adapter="@{adapter}"/>
+
+        <Button
+            android:id="@+id/addTask"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Task" />
+
     </LinearLayout>
-
-    <Button
-        android:id="@+id/selectDate"
-        android:text="Select Date"
-        android:padding="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"/>
-
-</LinearLayout>
+</layout>
