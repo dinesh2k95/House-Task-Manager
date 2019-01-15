@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package projects.dinesh.housetaskmanager.task
 
 import android.arch.lifecycle.MutableLiveData
@@ -14,6 +16,7 @@ import kotlinx.android.synthetic.main.task_line_item.view.*
 import projects.dinesh.housetaskmanager.R
 import projects.dinesh.housetaskmanager.utils.AppPreferences
 import projects.dinesh.housetaskmanager.utils.Utils.TASK_DATE_FORMAT
+import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -40,19 +43,18 @@ class TaskViewModel : ViewModel() {
                 val simpleDateFormat = SimpleDateFormat(TASK_DATE_FORMAT)
                 val todayDate: String = simpleDateFormat.format(Date())
 
-                val user = arrayList.filterIndexed { index, user ->
-                    userPosition = index
-                    user.name == userName
-                }[0]
-                user.taskIds = user.taskIds.filter { it.date == todayDate } as ArrayList<UserTask>
-                if (user.taskIds.isEmpty()) {
-                    status.value = "No Tasks"
-                } else {
-                    status.value = "Tasks loaded"
-                    val userTasks = user.taskIds
-                    taskAdapter.userTasks = userTasks
-                    taskAdapter.notifyDataSetChanged()
-                    calculatePoints(userTasks)
+                val user = arrayList.firstOrNull { it.name == userName }
+                user?.let { nonNullUser ->
+                    userPosition = arrayList.indexOf(nonNullUser)
+                    val taskIds = nonNullUser.taskIds.filterNotNull().filter { it.date == todayDate } as java.util.ArrayList<UserTask>
+                    if (nonNullUser.taskIds.isEmpty()) {
+                        status.value = "No Tasks"
+                    } else {
+                        status.value = "Tasks loaded"
+                        taskAdapter.userTasks = taskIds
+                        taskAdapter.notifyDataSetChanged()
+                        calculatePoints(taskIds)
+                    }
                 }
             }
 
@@ -74,14 +76,17 @@ class TaskViewModel : ViewModel() {
                         val task = dataSnapshot.getValue(Task::class.java)!!
                         val taskView = holder.taskView
                         if (userTask.completed) {
-                            taskView.isChecked = true
+                            taskView.post {
+                                taskView.isChecked = true
+                            }
                         }
                         taskView.text = task.name
                         holder.taskView.setOnClickListener {
                             taskView.toggle()
                             userTask.completed = taskView.isChecked
                             calculatePoints(userTasks)
-                            usersDbReference.child("$userPosition").child("taskIds/${holder.adapterPosition}").setValue(userTask)
+                            println("Setting value :::: $userTask at ${userTasks.indexOf(userTask)}")
+                            usersDbReference.child("$userPosition").child("taskIds/${userTasks.indexOf(userTask)}").setValue(userTask)
                                 .addOnSuccessListener { println("User update Successful !") }
                                 .addOnFailureListener { exception -> println("Toggle UnSuccessful ::: $exception") }
                         }
@@ -98,12 +103,12 @@ class TaskViewModel : ViewModel() {
     }
 
     private fun calculatePoints(userTasks: ArrayList<UserTask>) {
-        var totalPoints = 0
-        val singleTaskPoints = 10 / userTasks.size
+        var totalPoints = 0.0
+        val singleTaskPoint: Double = (10.0 / userTasks.size)
         userTasks.filter { it.completed }.forEach {
-            totalPoints += singleTaskPoints
+            totalPoints += singleTaskPoint
         }
-        points.value = totalPoints.toString()
+        points.value = BigDecimal.valueOf(totalPoints).setScale(2, BigDecimal.ROUND_HALF_UP).toString()
     }
 }
 

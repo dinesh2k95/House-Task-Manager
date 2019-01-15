@@ -4,7 +4,7 @@
 
         <data>
             <variable
-                name="adapter"
+                name="taskAdapter"
                 type="projects.dinesh.housetaskmanager.admin.AdminFragment.AdminTaskAdapter" />
         </data>
 
@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:gravity="center_horizontal"
         tools:context=".admin.AdminFragment">
 
         <LinearLayout
@@ -37,7 +38,7 @@
             android:id="@+id/selectDate"
             android:text="Select Date"
             android:padding="10dp"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone" />
 
@@ -47,7 +48,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:visibility="gone"
-            android:adapter="@{adapter}"/>
+            android:adapter="@{taskAdapter}"/>
 
         <Button
             android:id="@+id/addTask"

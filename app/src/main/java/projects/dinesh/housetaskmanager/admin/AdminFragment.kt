@@ -1,25 +1,31 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package projects.dinesh.housetaskmanager.admin
 
+import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.app.AlertDialog
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
-import com.applandeo.materialcalendarview.CalendarView.MANY_DAYS_PICKER
 import com.applandeo.materialcalendarview.CalendarView.ONE_DAY_PICKER
 import com.applandeo.materialcalendarview.builders.DatePickerBuilder
 import com.applandeo.materialcalendarview.listeners.OnSelectDateListener
+import org.jetbrains.anko.*
 import com.google.firebase.database.*
-import kotlinx.android.synthetic.main.admin_task_line_item.view.*
 import kotlinx.android.synthetic.main.fragment_admin.*
 import kotlinx.android.synthetic.main.task_line_item.view.*
-
+import org.jetbrains.anko.sdk27.coroutines.onItemSelectedListener
 import projects.dinesh.housetaskmanager.R
+import projects.dinesh.housetaskmanager.databinding.FragmentAdminBinding
 import projects.dinesh.housetaskmanager.task.Task
-import projects.dinesh.housetaskmanager.task.TaskViewHolder
 import projects.dinesh.housetaskmanager.task.User
 import projects.dinesh.housetaskmanager.task.UserTask
 import projects.dinesh.housetaskmanager.utils.Utils.TASK_DATE_FORMAT
@@ -31,17 +37,15 @@ class AdminFragment : Fragment() {
 
     private var usersDbReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("users")
     private var taskDbReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("tasks")
-    public lateinit var taskAdapter: AdminTaskAdapter
     private lateinit var selectedDate: String
     private lateinit var selectedUser: User
     private var userPosition: Int = 0
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
+    private lateinit var binding: FragmentAdminBinding
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_admin, container, false)
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_admin, container, false)
+        binding.taskAdapter = AdminTaskAdapter(arrayListOf())
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,27 +55,26 @@ class AdminFragment : Fragment() {
     }
 
     private fun initializeUserList() {
-        usersDbReference.addListenerForSingleValueEvent(object : ValueEventListener {
+        usersDbReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(p0: DataSnapshot) {
                 val typeIndicator = object : GenericTypeIndicator<java.util.ArrayList<User>>() {}
                 val userList: java.util.ArrayList<User> = p0.getValue(typeIndicator)!!
-                userSpinner.adapter = ArrayAdapter(this@AdminFragment.context, android.R.layout.simple_spinner_item, userList.map { it.name })
+                if (::selectedUser.isInitialized && ::selectedDate.isInitialized) {
+                    selectedUser = userList[userPosition]
+                    refreshTasks()
+                    return
+                }
+                userSpinner.adapter = ArrayAdapter(this@AdminFragment.context, R.layout.spinner_line_item, userList.map { it.name })
                 userSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                         userPosition = position
                         selectedUser = userList[userPosition]
-                        println("Selected User : $selectedUser")
                         initializeDatePicker()
                     }
-
-                    override fun onNothingSelected(parent: AdapterView<*>?) {
-                    }
+                    override fun onNothingSelected(parent: AdapterView<*>?) {}
                 }
             }
-
-            override fun onCancelled(p0: DatabaseError) {
-            }
-
+            override fun onCancelled(p0: DatabaseError) {}
         })
     }
 
@@ -80,7 +83,7 @@ class AdminFragment : Fragment() {
         selectDate.setOnClickListener {
             val calendar = Calendar.getInstance()
             val datePickerBuilder = DatePickerBuilder(activity, OnSelectDateListener { calendars ->
-                selectedDate = formatGivenDateForPattern(calendar.timeInMillis, TASK_DATE_FORMAT)
+                selectedDate = formatGivenDateForPattern(calendars.first().timeInMillis, TASK_DATE_FORMAT)
                 initializeTasks()
             })
 
@@ -96,14 +99,76 @@ class AdminFragment : Fragment() {
     }
 
     private fun initializeTasks() {
-        val userTasks = selectedUser.taskIds.filter { it.date == selectedDate } as java.util.ArrayList<UserTask>
-        println("userTasks :::: $userTasks")
-        taskAdapter = AdminTaskAdapter(userTasks)
-        taskAdapter.userTasks = userTasks
-        taskAdapter.notifyDataSetChanged()
+        adminTaskList.layoutManager = LinearLayoutManager(context)
+        adminTaskList.visibility = VISIBLE
+        refreshTasks()
+        addTask.setOnClickListener(addTaskListener())
     }
 
-    inner class AdminTaskAdapter(var userTasks: java.util.ArrayList<UserTask>) : RecyclerView.Adapter<AdminTaskViewHolder>() {
+    private fun addTaskListener(): (View) -> Unit {
+        return { view ->
+            taskDbReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(p0: DataSnapshot) {
+                    val typeIndicator = object : GenericTypeIndicator<java.util.ArrayList<Task?>>() {}
+                    var taskList: ArrayList<Task?> = p0.getValue(typeIndicator)!!
+
+                    val taskNameList: ArrayList<String> = taskList.filterNotNull().map { it.name } as ArrayList
+                    taskNameList.add("New Task")
+                    lateinit var editText: EditText
+                    lateinit var spinner: Spinner
+
+                    AlertDialog.Builder(activity!!)
+                        .setTitle("Add new Task")
+                        .setView(with(view.context) {
+                            linearLayout {
+                            orientation = LinearLayout.VERTICAL
+                            editText = editText {
+                                visibility = GONE
+                                hint = "Enter New task Name"
+                            }.lparams {
+                                width = MATCH_PARENT
+                                margin = 10}
+                            spinner = spinner {
+                                adapter = ArrayAdapter(this@AdminFragment.context, R.layout.spinner_line_item, taskNameList)
+                                onItemSelectedListener {
+                                    onItemSelected { adapterView, view, i, l ->
+                                        if (taskNameList[i] == "New Task") {
+                                            editText.visibility = VISIBLE
+                                        }
+                                    }
+                                }
+                            }.lparams {width = MATCH_PARENT
+                                margin = 10}
+                        }})
+                        .setPositiveButton("Done") { i, j ->
+                            lateinit var task: UserTask
+                            task = if (editText.visibility == VISIBLE) {
+                                val newTask = Task("${editText.text}", false)
+                                taskList.add(newTask)
+                                taskList = taskList.filterNotNull() as ArrayList<Task?>
+                                taskDbReference.setValue(taskList)
+                                UserTask(taskList.size - 1, selectedDate, false)
+                            } else {
+                                UserTask(spinner.selectedItemPosition, selectedDate, false)
+                            }
+                            selectedUser.taskIds.add(task)
+                            usersDbReference.child("$userPosition").child("taskIds").setValue(selectedUser.taskIds)
+                        }.show()
+                }
+                override fun onCancelled(p0: DatabaseError) {}
+            })
+        }
+    }
+
+    private fun refreshTasks() {
+        val userTasks = selectedUser.taskIds.filterNotNull().filter { it.date == selectedDate } as java.util.ArrayList<UserTask>
+        println("Refreshing userTasks :::: $userTasks")
+        (binding.taskAdapter as AdminTaskAdapter).userTasks = userTasks
+        (binding.taskAdapter as AdminTaskAdapter).notifyDataSetChanged()
+    }
+
+    inner class AdminTaskAdapter(var userTasks: java.util.ArrayList<UserTask>) :
+        RecyclerView.Adapter<AdminTaskViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdminTaskViewHolder {
             val view = LayoutInflater.from(parent.context).inflate(R.layout.task_line_item, parent, false)
             return AdminTaskViewHolder(view)
@@ -114,25 +179,20 @@ class AdminFragment : Fragment() {
             taskDbReference.child(userTask.taskId.toString())
                 .addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        val task = dataSnapshot.getValue(Task::class.java)!!
+                        val task = dataSnapshot.getValue(Task::class.java)
                         val taskView = holder.taskView
-                        holder.taskView.isSelected = userTask.completed
-
-                        taskView.text = task.name
+                        if (userTask.completed) {
+                            taskView.isSelected = true
+                        }
+                        taskView.text = task?.name
                         taskView.setOnLongClickListener {
-                            Toast.makeText(this@AdminFragment.context, "Delete this Item ??", Toast.LENGTH_LONG).show()
-//                            usersDbReference.child("$userPosition").child("taskIds/${holder.adapterPosition}").setValue(null)
+                            Toast.makeText(this@AdminFragment.context, "Deleted Item", Toast.LENGTH_LONG).show()
+                            selectedUser.taskIds.indexOf(userTask)
+                            usersDbReference.child("$userPosition").child("taskIds/${selectedUser.taskIds.indexOf(userTask)}").setValue(null)
                             true
                         }
-                        holder.taskView.setOnClickListener {
-
-//                                .addOnSuccessListener { println("User update Successful !") }
-//                                .addOnFailureListener { exception -> println("Toggle UnSuccessful ::: $exception") }
-                        }
                     }
-
-                    override fun onCancelled(p0: DatabaseError) {
-                    }
+                    override fun onCancelled(p0: DatabaseError) {}
                 })
         }
 

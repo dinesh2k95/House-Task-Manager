@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/task_entry"
+            android:title="Enter Tasks" />
+
+        <!--<item-->
+            <!--android:id="@+id/leader_board"-->
+            <!--android:title="LeaderBoard"/>-->
+
+        <item
+            android:id="@+id/admin_panel"
+            android:title="Admin Panel" />
+
+    </group>
+</menu>

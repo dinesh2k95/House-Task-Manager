@@ -7,6 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_login.*
+import org.jetbrains.anko.support.v4.toast
+import projects.dinesh.housetaskmanager.LoginFragment.Companion.AccessLevel.ADMIN
+import projects.dinesh.housetaskmanager.LoginFragment.Companion.AccessLevel.USER
 import projects.dinesh.housetaskmanager.utils.AppPreferences
 
 class LoginFragment : Fragment() {
@@ -28,14 +31,16 @@ class LoginFragment : Fragment() {
     private fun validateLogin() {
         val name = name.text.toString()
         val password = password.text.toString()
-        println("Name::: $name Password :::: $password")
-        userNameMap[name]?.let { correctPassword ->
-            if (password == correctPassword) {
+        val filteredUser = usersDataSet.firstOrNull { it.first == name }
+        if (filteredUser != null) {
+            if (password == filteredUser.second) {
                 AppPreferences.putString(context!!, "userName", name)
                 listener?.onLoginSuccess()
             } else {
-                println("InCorrect password $name !!")
+                toast("In Correct password $name !!")
             }
+        } else {
+            toast("Wrong user name")
         }
     }
 
@@ -61,11 +66,12 @@ class LoginFragment : Fragment() {
         @JvmStatic
         fun newInstance() = LoginFragment()
 
-        val userNameMap: HashMap<String, String> = hashMapOf(
-            Pair("Karunanidhi", "Karunanidhi"),
-            Pair("Jeyamani", "Jeyamani"),
-            Pair("Sharmili", "Sharmili"),
-            Pair("Dinesh", "Dinesh")
+        val usersDataSet: ArrayList<Triple<String, String, AccessLevel>> = arrayListOf(
+            Triple("karunanidhi", "111", USER),
+            Triple("jeyamani", "321", USER),
+            Triple("sharmili", "sharmili", USER),
+            Triple("dinesh", "dinesh", ADMIN)
         )
+        enum class AccessLevel { USER, ADMIN }
     }
 }
