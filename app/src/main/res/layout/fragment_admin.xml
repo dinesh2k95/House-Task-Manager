@@ -50,11 +50,26 @@
             android:visibility="gone"
             android:adapter="@{taskAdapter}"/>
 
-        <Button
-            android:id="@+id/addTask"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Task" />
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/addTask"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Task"
+                android:layout_margin="5dp"/>
+
+            <Button
+                android:id="@+id/cloneTasks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clone Tasks"
+                android:layout_margin="5dp"/>
+        </LinearLayout>
 
     </LinearLayout>
 </layout>

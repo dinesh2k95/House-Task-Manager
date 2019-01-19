@@ -18,11 +18,13 @@ import android.widget.*
 import com.applandeo.materialcalendarview.CalendarView.ONE_DAY_PICKER
 import com.applandeo.materialcalendarview.builders.DatePickerBuilder
 import com.applandeo.materialcalendarview.listeners.OnSelectDateListener
+import com.gofrugal.sellquick.atslibrary.CustomToast
 import org.jetbrains.anko.*
 import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.fragment_admin.*
 import kotlinx.android.synthetic.main.task_line_item.view.*
 import org.jetbrains.anko.sdk27.coroutines.onItemSelectedListener
+import org.jetbrains.anko.support.v4.longToast
 import projects.dinesh.housetaskmanager.R
 import projects.dinesh.housetaskmanager.databinding.FragmentAdminBinding
 import projects.dinesh.housetaskmanager.task.Task
@@ -37,6 +39,7 @@ class AdminFragment : Fragment() {
 
     private var usersDbReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("users")
     private var taskDbReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("tasks")
+    private val customToast: CustomToast = CustomToast(context)
     private lateinit var selectedDate: String
     private lateinit var selectedUser: User
     private var userPosition: Int = 0
@@ -51,7 +54,10 @@ class AdminFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initializeUserList()
-        initializeDatePicker()
+        initializeDatePicker {
+            selectedDate = formatGivenDateForPattern(it.first().timeInMillis, TASK_DATE_FORMAT)
+            initializeTasks()
+        }
     }
 
     private fun initializeUserList() {
@@ -69,7 +75,6 @@ class AdminFragment : Fragment() {
                     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                         userPosition = position
                         selectedUser = userList[userPosition]
-                        initializeDatePicker()
                     }
                     override fun onNothingSelected(parent: AdapterView<*>?) {}
                 }
@@ -78,13 +83,12 @@ class AdminFragment : Fragment() {
         })
     }
 
-    private fun initializeDatePicker() {
+    private fun initializeDatePicker(onSuccess: (List<Calendar>) -> Unit) {
         selectDate.visibility = VISIBLE
         selectDate.setOnClickListener {
             val calendar = Calendar.getInstance()
             val datePickerBuilder = DatePickerBuilder(activity, OnSelectDateListener { calendars ->
-                selectedDate = formatGivenDateForPattern(calendars.first().timeInMillis, TASK_DATE_FORMAT)
-                initializeTasks()
+                onSuccess(calendars)
             })
 
             datePickerBuilder.pickerType(ONE_DAY_PICKER)
@@ -103,6 +107,26 @@ class AdminFragment : Fragment() {
         adminTaskList.visibility = VISIBLE
         refreshTasks()
         addTask.setOnClickListener(addTaskListener())
+        cloneTasks.setOnClickListener {
+            initializeDatePicker {calendars ->
+                val cloneTasksDate = formatGivenDateForPattern(calendars.first().timeInMillis, TASK_DATE_FORMAT)
+                val userTasks = selectedUser.taskIds.filterNotNull().filter { it.date == cloneTasksDate }
+                    .map { userTask ->
+                        val newUserTask = userTask.copy()
+                        newUserTask.date = cloneTasksDate
+                        newUserTask } as ArrayList
+                selectedUser.taskIds.addAll(userTasks)
+
+                usersDbReference.child("$userPosition").child("taskIds").setValue(selectedUser.taskIds)
+                    .addOnSuccessListener {
+                        customToast.infoToast("Copy Successful !")
+                        refreshTasks()
+                    }
+                    .addOnFailureListener {
+                        customToast.alertToast("Copy UnSuccessful !")
+                    }
+            }
+        }
     }
 
     private fun addTaskListener(): (View) -> Unit {
@@ -153,6 +177,8 @@ class AdminFragment : Fragment() {
                             }
                             selectedUser.taskIds.add(task)
                             usersDbReference.child("$userPosition").child("taskIds").setValue(selectedUser.taskIds)
+                                .addOnSuccessListener { CustomToast(context).infoToast("New Task Added successfully !") }
+                                .addOnFailureListener { CustomToast(context).errorToast("Error while adding new Task") }
                         }.show()
                 }
                 override fun onCancelled(p0: DatabaseError) {}
@@ -160,8 +186,8 @@ class AdminFragment : Fragment() {
         }
     }
 
-    private fun refreshTasks() {
-        val userTasks = selectedUser.taskIds.filterNotNull().filter { it.date == selectedDate } as java.util.ArrayList<UserTask>
+    private fun refreshTasks(date: String = selectedDate) {
+        val userTasks = selectedUser.taskIds.filterNotNull().filter { it.date == date } as java.util.ArrayList<UserTask>
         println("Refreshing userTasks :::: $userTasks")
         (binding.taskAdapter as AdminTaskAdapter).userTasks = userTasks
         (binding.taskAdapter as AdminTaskAdapter).notifyDataSetChanged()

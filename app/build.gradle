@@ -48,11 +48,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    compile 'com.android.support:recyclerview-v7:27.1.1'
-    compile 'com.applandeo:material-calendar-view:1.4.0'
-    compile 'joda-time:joda-time:2.3'
-    compile "org.jetbrains.anko:anko:0.10.8"
-    compile "com.android.support:multidex:1.0.3"
+    implementation 'com.android.support:recyclerview-v7:27.1.1'
+    implementation 'com.applandeo:material-calendar-view:1.4.0'
+    implementation 'joda-time:joda-time:2.3'
+    implementation "org.jetbrains.anko:anko:0.10.8"
+    implementation "com.android.support:multidex:1.0.3"
 
     implementation 'com.google.firebase:firebase-database:16.0.5'
     implementation 'com.google.firebase:firebase-core:16.0.5'
